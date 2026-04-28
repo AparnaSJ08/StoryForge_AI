@@ -70,7 +70,7 @@ userstory-gen/
 
 ---
 
-## 📄 Key Files Explained
+## 📄 Key Files
 
 ### `src/services/aiService.js` — AI Story Generation
 - Calls **Groq API** (`https://api.groq.com/openai/v1/chat/completions`) with `llama-3.3-70b-versatile`
@@ -125,7 +125,7 @@ userstory-gen/
 ### The Problem MCP Solves
 Without MCP, the UI would need hardcoded REST calls to specific tools (e.g., `POST https://dev.azure.com/.../workitems`). This creates tight coupling — switching from ADO to Jira requires rewriting the UI.
 
-### Our MCP Architecture
+### MCP Architecture
 
 ```
 User clicks "Publish"
@@ -149,29 +149,6 @@ User clicks "Publish"
   UI displays: "✓ Published as PROJ-1042"
 ```
 
-### Why This Satisfies MCP Requirements
-
-| Criterion | How It's Met |
-|-----------|-------------|
-| **No direct REST calls to ADO/Jira** | `mcpClient.js` only dispatches tool names + params — never constructs issue-tracker URLs |
-| **Tool abstraction** | Uses `create_work_item` and `update_work_item` as tool identifiers, not API endpoints |
-| **Swappable** | Replace the import in `mcpClient.js` from `mockMCPServer` to a real MCP server SSE endpoint — **zero UI changes needed** |
-| **Standard contract** | Both request (`{ tool, params }`) and response (`{ workItemId, url, status, timestamp }`) follow the MCP tool-call pattern |
-| **Clean separation** | The UI layer (`PublishBar.jsx`) only knows about `publishStory()` — it has no knowledge of MCP internals |
-
-### Switching to a Real MCP Server
-
-To connect to a real ADO/Jira MCP server, only **one line** changes in `mcpClient.js`:
-
-```diff
-- import { handleToolCall } from '../mocks/mockMCPServer.js';
-+ import { handleToolCall } from './realMCPClient.js';  // SSE or HTTP dispatch
-```
-
-The `realMCPClient.js` would implement:
-- SSE connection to `https://mcp.myorg.visualstudio.com/sse`
-- OAuth token handling for ADO/Jira authentication
-- Same `handleToolCall({ tool, params })` interface
 
 ---
 
@@ -202,21 +179,6 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🎬 Demo Flow (5–7 minutes)
-
-| Step | Action | What to Highlight |
-|------|--------|-------------------|
-| 1 | Show the input panel | "Accepts any meeting transcript or raw requirements" |
-| 2 | Click **Load Sample**, then **Generate** | "Groq/Llama extracts features, structures them as stories" |
-| 3 | Walk through a story card | "All 5 fields: Title, Description, AC, Story Points, Parent" |
-| 4 | Edit a story point and acceptance criterion | "Human always has final say — fully editable" |
-| 5 | Reject one story, click Regenerate | "Closed loop — AI regenerates that specific story only" |
-| 6 | Click **Export Markdown** | "Portable output — works without ADO/Jira" |
-| 7 | Click **Publish to ADO/Jira** | "MCP layer — show `mcpClient.js` and `mockMCPServer.js`" |
-| 8 | Show the publish log | "Work item IDs returned, traceable to original transcript" |
-
----
-
 ## 🛠️ Tech Stack
 
 | Layer | Choice | Reason |
@@ -227,13 +189,4 @@ Open `http://localhost:5173` in your browser.
 | MCP | In-process mock module | No credentials needed; same contract as real MCP |
 | Export | `Blob` + `URL.createObjectURL` | Native browser APIs, zero library overhead |
 
----
 
-## 🔮 What Production-Ready Would Add
-
-1. Replace mock MCP import with real MCP server SSE endpoint
-2. Add OAuth token handling for ADO/Jira authentication
-3. Add persistent storage (PostgreSQL or Firebase)
-4. Add user authentication (Auth0 or similar)
-5. Stream LLM responses for faster perceived performance
-6. Webhook support to pull transcripts from Teams/Zoom directly
