@@ -1,4 +1,3 @@
-# StoryForge_AI
 # StoryForge AI — AI-Augmented User Story Generation using MCP
 
 **StoryForge AI** converts raw meeting transcripts and requirements into structured, editable Agile user stories using AI (Groq/Llama 3.3 70B), with a **Model Context Protocol (MCP)** abstraction layer for publishing stories to project management tools like Azure DevOps or Jira.
